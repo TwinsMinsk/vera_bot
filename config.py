@@ -21,7 +21,7 @@ class LLMConfig:
     model: str = "deepseek/deepseek-chat"
     vision_model: str = "google/gemini-2.0-flash-lite-preview-02-05"
     thinker_model: str = "deepseek/deepseek-r1"
-    image_model: str = "google/gemini-2.5-flash-image-preview"
+    image_model: str = "black-forest-labs/flux-schnell"
     system_prompt_path: str = "persona_prompt.md"
 
 @dataclass
