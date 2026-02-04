@@ -235,7 +235,7 @@ async def cmd_setmodel(message: types.Message):
     buttons = [
         [InlineKeyboardButton(text="🧠 DeepSeek V3", callback_data="model_deepseek/deepseek-chat")],
         [InlineKeyboardButton(text="🤔 DeepSeek R1", callback_data="model_deepseek/deepseek-r1")],
-        [InlineKeyboardButton(text="⚡ Gemini 2.0 Flash", callback_data="model_google/gemini-2.0-flash-lite-preview-02-05")],
+        [InlineKeyboardButton(text="⚡ Gemini 2.0 Flash Exp", callback_data="model_google/gemini-2.0-flash-exp:free")],
         [InlineKeyboardButton(text="🤖 GPT-4o Mini", callback_data="model_openai/gpt-4o-mini")],
         [InlineKeyboardButton(text="📝 Claude 3.5 Haiku", callback_data="model_anthropic/claude-3-5-haiku")],
         [InlineKeyboardButton(text="❌ Сбросить (по умолчанию)", callback_data="model_reset")]
