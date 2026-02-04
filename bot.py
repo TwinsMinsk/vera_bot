@@ -28,7 +28,7 @@ async def main():
     # Initialize Services
     memory_service = MemoryService(config.redis)
     llm_service = LLMService(config.llm)
-    voice_service = VoiceService(config.llm) # Uses same key/base_url as LLM for now
+    voice_service = VoiceService(config.voice)
 
     # Initialize Bot
     bot = Bot(

@@ -27,17 +27,20 @@ async def handle_voice(message: types.Message, bot: Bot, memory_service: MemoryS
     await bot.download_file(file_path, temp_file_name)
 
     # 2. Transcribe
-    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing") # or record_voice/upload_voice
+    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing") 
     
-    with open(temp_file_name, "rb") as audio_file:
-        transcribed_text = await voice_service.transcribe(audio_file)
+    # New VoiceService expects PATH, not file object
+    transcribed_text = await voice_service.transcribe(temp_file_name)
 
-    # Delete temp file
+    # Delete temp file (Service might handle mp3, but we handle ogg here)
     if os.path.exists(temp_file_name):
-        os.remove(temp_file_name)
+        try:
+            os.remove(temp_file_name)
+        except:
+            pass
 
     if not transcribed_text:
-        await message.answer("Не удалось распознать голосовое сообщение.")
+        await message.answer("Не удалось распознать голосовое сообщение 😢")
         return
 
     # 3. Process as text
@@ -53,5 +56,16 @@ async def handle_voice(message: types.Message, bot: Bot, memory_service: MemoryS
     # Add to history (Assistant)
     await memory_service.add_message(user_id, {"role": "assistant", "content": response_text})
     
+    # Format
+    from app.utils.text import format_text_html
+    formatted_response = format_text_html(response_text)
+    
     # Send response
-    await message.answer(f"🎤 <i>{transcribed_text}</i>\n\n{response_text}")
+    # Escaping transcribed text just in case
+    import html
+    safe_transcription = html.escape(transcribed_text)
+    
+    try:
+        await message.answer(f"🎤 <i>{safe_transcription}</i>\n\n{formatted_response}", parse_mode="HTML")
+    except:
+        await message.answer(f"🎤 {transcribed_text}\n\n{response_text}")
