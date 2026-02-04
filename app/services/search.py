@@ -1,37 +1,44 @@
 import logging
-from duckduckgo_search import DDGS
+from tavily import TavilyClient
+from config import SearchConfig
 
 logger = logging.getLogger(__name__)
 
 class SearchService:
-    def __init__(self):
-        self._ddgs = DDGS()
+    def __init__(self, config: SearchConfig):
+        # Handle empty key gracefully if needed, or fail fast
+        self._client = TavilyClient(api_key=config.api_key) if config.api_key else None
+        self._enabled = bool(config.api_key)
 
     async def search(self, query: str, max_results: int = 3) -> str:
         """
-        Search DuckDuckGo and return formatted results string.
+        Search Tavily and return context string.
+        Returns "SEARCH_FAILED" if error or no results.
         """
+        if not self._enabled:
+            return "SEARCH_FAILED"
+
         try:
-            # Note: Async DDG is not standard in some versions, but recent allow sync call wrapped or async usage.
-            # Library often changes. Safe bet: run in executor if sync, or use async API if available.
-            # 4.x has 'text' method but checking if it's async.
-            # Assuming sync for now and wrapping it might be safer, but let's try direct call.
-            # Usually strict async libs require await.
-            # Let's assume standard sync because simple.
+            # Tavily is sync by default (python sdk). 
+            # For async, we should use run_in_executor or verify if they added async support.
+            # Assuming sync:
+            response = self._client.search(query=query, search_depth="basic", max_results=max_results)
             
-            results = self._ddgs.text(query, max_results=max_results)
-            
+            results = response.get("results", [])
             if not results:
-                return ""
+                return "SEARCH_FAILED"
             
-            formatted_results = []
+            content_list = []
             for r in results:
-                formatted_results.append(f"Title: {r.get('title')}\nBody: {r.get('body')}\nLink: {r.get('href')}")
+                title = r.get('title', 'Unknown')
+                body = r.get('content', '') # Tavily usually returns 'content'
+                url = r.get('url', '')
+                content_list.append(f"Source: {title} ({url})\nContent: {body}")
             
-            return "\n\n".join(formatted_results)
+            return "\n\n".join(content_list)
         except Exception as e:
-            logger.error(f"Error searching DuckDuckGo: {e}")
-            return ""
+            logger.error(f"Error searching Tavily: {e}")
+            return "SEARCH_FAILED"
 
     def needs_search(self, text: str) -> bool:
         """
@@ -41,7 +48,8 @@ class SearchService:
             "погода", "новости", "курс", "цена", "кто такой", 
             "что такое", "когда", "где", "weather", "news", 
             "price", "who is", "what is", "when", "where",
-            "прогноз", "найди"
+            "прогноз", "найди", "факты о", "сколько стоит",
+            "bitcoin", "usd", "euro", "рубль"
         ]
         text_lower = text.lower()
         return any(t in text_lower for t in triggers)

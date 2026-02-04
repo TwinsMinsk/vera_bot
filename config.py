@@ -27,11 +27,16 @@ class VoiceConfig:
     model: str = "whisper-large-v3-turbo"
 
 @dataclass
+class SearchConfig:
+    api_key: str
+
+@dataclass
 class Config:
     bot: BotConfig
     redis: RedisConfig
     llm: LLMConfig
     voice: VoiceConfig
+    search: SearchConfig
 
 def load_config() -> Config:
     bot_token = os.getenv("BOT_TOKEN")
@@ -47,18 +52,16 @@ def load_config() -> Config:
     if not openrouter_key:
         raise ValueError("OPENROUTER_API_KEY is not set")
         
-    groq_key = os.getenv("GROQ_API_KEY")
-    # For backward compatibility or if not set, we can warn but let's enforce it as per task
-    if not groq_key:
-        # Fallback or error? Task says "Bravo iz os.getenv". Let's assume user will set it.
-        # But for safety in local dev, maybe optional? 
-        # No, strict requirement: "Ключ: Брать из os.getenv".
-        # Let's make it strict to avoid runtime errors later.
-        pass 
+    groq_key = os.getenv("GROQ_API_KEY") # Optional check removed to avoid logic conflict if user wants incomplete config locally
+    
+    tavily_key = os.getenv("TAVILY_API_KEY", "")
+    # Strict check if we want to enforce it
+    # if not tavily_key: raise ValueError("TAVILY_API_KEY is not set")
         
     return Config(
         bot=BotConfig(token=bot_token, admin_ids=admin_ids),
         redis=RedisConfig(url=redis_url),
         llm=LLMConfig(api_key=openrouter_key),
-        voice=VoiceConfig(api_key=groq_key or "")
+        voice=VoiceConfig(api_key=groq_key or ""),
+        search=SearchConfig(api_key=tavily_key)
     )

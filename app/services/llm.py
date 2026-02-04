@@ -20,15 +20,24 @@ class LLMService:
 
     def _load_system_prompt(self) -> str:
         """Load system prompt from file."""
+        base_prompt = "You are a helpful assistant."
         try:
             with open(self._system_prompt_path, 'r', encoding='utf-8') as f:
-                return f.read().strip()
+                base_prompt = f.read().strip()
         except FileNotFoundError:
             logger.warning(f"System prompt file not found at {self._system_prompt_path}. Using default.")
-            return "You are a helpful assistant."
         except Exception as e:
             logger.error(f"Error loading system prompt: {e}")
-            return "You are a helpful assistant."
+
+        # Anti-Hallucination Injection
+        anti_hallucination_rule = (
+            "\n\n[ANTI-HALLUCINATION PROTOCOL]\n"
+            "If the context contains 'SEARCH_FAILED' or does NOT contain relevant internet info, "
+            "and the user asks for real-time facts (weather, prices, news), "
+            "you MUST ADMIT you do not know. "
+            "Do NOT make up data. Check the context carefully."
+        )
+        return base_prompt + anti_hallucination_rule
 
     async def generate_response(self, history: List[Dict[str, str]]) -> str:
         """Generate response from LLM based on history."""

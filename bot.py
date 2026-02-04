@@ -30,7 +30,7 @@ async def main():
     llm_service = LLMService(config.llm)
     from app.services.search import SearchService
     voice_service = VoiceService(config.voice)
-    search_service = SearchService()
+    search_service = SearchService(config.search)
 
     # Initialize Bot
     bot = Bot(
