@@ -1,4 +1,5 @@
 import logging
+import datetime
 from tavily import TavilyClient
 from config import SearchConfig
 
@@ -19,6 +20,17 @@ class SearchService:
             return "SEARCH_FAILED"
 
         try:
+            # OPTIMIZATION: Clean query
+            # 1. Remove current year to avoid stale SEO results like "Weather 2024" if we are in 2026?
+            # Or user means "don't include 2025 if today is 2026". 
+            # Safe logic: Remove current year string.
+            current_year = str(datetime.datetime.now().year)
+            query = query.replace(current_year, "")
+            
+            # 2. Add 'current' for weather/news
+            if "погода" in query.lower() or "weather" in query.lower():
+                query += " current"
+
             # Tavily is sync by default (python sdk). 
             # For async, we should use run_in_executor or verify if they added async support.
             # Assuming sync:

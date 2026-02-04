@@ -50,4 +50,4 @@ class MemoryService:
             logger.error(f"Error clearing history in Redis: {e}")
 
     async def close(self):
-        await self._redis.close()
+        await self._redis.aclose()
