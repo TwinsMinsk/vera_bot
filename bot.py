@@ -28,7 +28,9 @@ async def main():
     # Initialize Services
     memory_service = MemoryService(config.redis)
     llm_service = LLMService(config.llm)
+    from app.services.search import SearchService
     voice_service = VoiceService(config.voice)
+    search_service = SearchService()
 
     # Initialize Bot
     bot = Bot(
@@ -55,6 +57,7 @@ async def main():
             memory_service=memory_service,
             llm_service=llm_service,
             voice_service=voice_service,
+            search_service=search_service,
             config=config # Optional but good to have
         )
     except Exception as e:

@@ -4,44 +4,41 @@ import html
 def format_text_html(text: str) -> str:
     """
     Format text for Telegram HTML parse mode.
-    1. Escapes generic < > symbols (not valid tags).
-    2. Converts **text** to <b>text</b>.
-    3. Converts *text* to <i>text</i> (unless it looks like a list item).
-    4. Removes Markdown headers (###).
+    Correct Logic:
+    1. Escape ENTIRE text first (so User's <script> becomes &lt;script&gt;).
+    2. THEN restore/convert Markdown patterns to validated HTML tags.
     """
     if not text:
         return ""
         
-    # 0. Basic cleaning of headers
-    # Remove "### Header" -> "Header" (bold maybe?)
-    # Let's just make headers bold.
-    text = re.sub(r'^#{1,6}\s+(.*)$', r'<b>\1</b>', text, flags=re.MULTILINE)
-    
-    # 1. Escape HTML special chars to avoid conflict
-    # We escape EVERYTHING first, then un-escape our specific tags later? 
-    # Or strict replacement. 
-    # Safer strategy: Escape & < > first.
+    # 1. Escape everything first
     text = html.escape(text, quote=False)
     
-    # 2. Bold: **text** -> <b>text</b>
-    # Since we escaped < and >, we can safely introduce new tags.
-    # Regex for **...**
+    # 2. Bold: **text** or __text__ -> <b>text</b>
+    # Note: re.sub will operate on the escaped string.
+    # Markdown usually doesn't care about &lt; inside logic unless strictly defined.
+    # We match **...**
     text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
-    # Also __...__ sometimes used for bold
     text = re.sub(r'__(.+?)__', r'<b>\1</b>', text)
     
-    # 3. Italic: *text* -> <i>text</i>
-    # Avoid matching bullet points like "* item" at start of line
-    # Match *text* where * is not followed by space, or preceeded by space/start
+    # 3. Italic: *text* or _text_ -> <i>text</i>
+    # Avoid matching inside words if possible, but basic * logic:
     text = re.sub(r'(?<!\w)\*([^\s][^*]*[^\s])\*(?!\w)', r'<i>\1</i>', text)
-    # Also _..._
     text = re.sub(r'(?<!\w)_([^\s][^_]*[^\s])_(?!\w)', r'<i>\1</i>', text)
     
     # 4. Monospace: `text` -> <code>text</code>
     text = re.sub(r'`(.+?)`', r'<code>\1</code>', text)
     
     # 5. Preformatted: ```code``` -> <pre>code</pre>
-    # Note: re.DOTALL for multiline
     text = re.sub(r'```(.+?)```', r'<pre>\1</pre>', text, flags=re.DOTALL)
+    
+    # 6. Links: [text](url) -> <a href="url">text</a>
+    # Note: URL might be escaped! e.g. foo&amp;bar
+    # We should match parentheses carefully.
+    text = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', text)
+    
+    # 7. Headers: ### Header -> <b>Header</b>
+    # Header usually implies new line.
+    text = re.sub(r'^#{1,6}\s+(.*)$', r'<b>\1</b>', text, flags=re.MULTILINE)
     
     return text
