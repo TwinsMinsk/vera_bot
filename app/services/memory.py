@@ -27,7 +27,7 @@ class MemoryService:
         except Exception as e:
             logger.error(f"Error adding message to Redis: {e}")
 
-    async def get_history(self, user_id: int, limit: int = 15) -> List[Dict[str, str]]:
+    async def get_history(self, user_id: int, limit: int = 5) -> List[Dict[str, str]]:
         """Get the last N messages from the user's chat history."""
         key = f"chat_history:{user_id}"
         try:

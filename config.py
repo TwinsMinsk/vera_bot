@@ -18,7 +18,7 @@ class RedisConfig:
 class LLMConfig:
     api_key: str
     base_url: str = "https://openrouter.ai/api/v1"
-    model: str = "deepseek/deepseek-chat"
+    model: str = "deepseek/deepseek-v3.2"
     vision_model: str = "openai/gpt-4o-mini"
     thinker_model: str = "deepseek/deepseek-r1"
     system_prompt_path: str = "persona_prompt.md"

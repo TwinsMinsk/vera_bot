@@ -234,6 +234,7 @@ async def cmd_setmodel(message: types.Message):
     # Упростим: используем алиасы в callback_data
     buttons = [
         [InlineKeyboardButton(text="🧠 DeepSeek V3", callback_data="model_deepseek/deepseek-chat")],
+        [InlineKeyboardButton(text="🚀 DeepSeek V3.2", callback_data="model_deepseek/deepseek-v3.2")],
         [InlineKeyboardButton(text="🤔 DeepSeek R1", callback_data="model_deepseek/deepseek-r1")],
         [InlineKeyboardButton(text="⚡ Gemini 1.5 Flash", callback_data="model_google/gemini-1.5-flash")],
         [InlineKeyboardButton(text="🤖 GPT-4o Mini", callback_data="model_openai/gpt-4o-mini")],
