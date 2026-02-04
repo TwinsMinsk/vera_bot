@@ -35,7 +35,10 @@ class LLMService:
             "If the context contains 'SEARCH_FAILED' or does NOT contain relevant internet info, "
             "and the user asks for real-time facts (weather, prices, news), "
             "you MUST ADMIT you do not know. "
-            "Do NOT make up data. Check the context carefully."
+            "Do NOT make up data. Check the context carefully.\n"
+            "[FORCE ANSWER]\n"
+            "If specific context regarding weather or news IS provided in the user message, "
+            "YOU MUST USE IT to answer the user question directly. Do not apologize about being an AI."
         )
         return base_prompt + anti_hallucination_rule
 

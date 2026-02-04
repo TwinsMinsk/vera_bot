@@ -35,6 +35,7 @@ class SearchService:
             # For async, we should use run_in_executor or verify if they added async support.
             # Assuming sync:
             response = self._client.search(query=query, search_depth="basic", max_results=max_results)
+            logger.info(f"DEBUG TAVILY RESPONSE: {response}")
             
             results = response.get("results", [])
             if not results:

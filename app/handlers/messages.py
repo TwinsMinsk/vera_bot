@@ -29,21 +29,15 @@ async def handle_text(message: types.Message, memory_service: MemoryService, llm
         await message.bot.send_chat_action(chat_id=message.chat.id, action="find_location") # Fun visual fallback
         search_results = await search_service.search(user_text)
         if search_results:
-            # Inject into history merely for this generation? 
-            # Or append to System prompt? 
-            # Appending to history as a System message specific to this turn is cleaner.
-            # But history usually assumes sequential roles.
-            # Standard pattern: Add an ephemeral system message or inject into last user message.
-            # Let's inject into last user message context.
-            context_msg = f"\n\n[Context from Internet Search]:\n{search_results}"
-            
-            # We already added user message. Let's update the last item in 'history' list locally?
-            # Or better: construct a transient "System Context" message.
-            system_context = {"role": "system", "content": f"Use this internet info if relevant:\n{search_results}"}
-            # Insert before last user message? Or at the end?
-            # LLM usually treats list sequentially.
-            history.insert(-1, system_context) 
-            # Wait, history last item is User. Inserting -1 puts it BEFORE user. Correct.
+            # --- Correct Injection Strategy ---
+            # Append to the LAST User message content.
+            # History structure: [..., {"role": "user", "content": "..."}] (assuming we just added it)
+            if history and history[-1]["role"] == "user":
+                history[-1]["content"] += f"\n\n[CONTEXT FROM INTERNET]:\n{search_results}\n\n[INSTRUCTION]: Use the above context to answer."
+            else:
+                # Fallback if for some reason last msg is not user (rare)
+                history.append({"role": "system", "content": f"Context: {search_results}"})
+            # ----------------------------------
     # --------------------
 
     response_text = await llm_service.generate_response(history)
