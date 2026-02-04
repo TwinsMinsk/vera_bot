@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+data/
+venv/
+.DS_Store
+.agent/
+.temp_ag_kit/
