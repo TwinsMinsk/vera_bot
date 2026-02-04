@@ -26,6 +26,7 @@ async def set_bot_commands(bot: Bot):
         BotCommand(command="clear", description="🧹 Очистить историю"),
         BotCommand(command="mode", description="🎭 Выбрать режим ИИ"),
         BotCommand(command="think", description="🧠 Режим глубокого мышления"),
+        BotCommand(command="setmodel", description="⚙️ Выбрать модель ИИ"),
         BotCommand(command="note", description="📝 Создать заметку"),
         BotCommand(command="notes", description="📋 Показать заметки"),
         BotCommand(command="delnote", description="🗑 Удалить заметку"),
