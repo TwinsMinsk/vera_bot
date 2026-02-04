@@ -48,7 +48,7 @@ class LLMService:
         )
         return base_prompt + anti_hallucination_rule
 
-    async def generate_response(self, history: List[Dict[str, str]], mode: str = "cute") -> str:
+    async def generate_response(self, history: List[Dict[str, str]], mode: str = "cute", model_override: Optional[str] = None) -> str:
         """Generate response from LLM based on history."""
         
         # Adjust system prompt based on mode
@@ -61,10 +61,13 @@ class LLMService:
             )
         
         messages = [{"role": "system", "content": system_prompt}] + history
+        
+        # Determine model to use
+        model_to_use = model_override if model_override else self._model
 
         try:
             response: ChatCompletion = await self._client.chat.completions.create(
-                model=self._model,
+                model=model_to_use,
                 messages=messages,
                 extra_headers=self._headers
             )

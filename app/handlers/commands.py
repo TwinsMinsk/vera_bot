@@ -38,6 +38,7 @@ async def cmd_help(message: types.Message):
 <b>🧠 Режимы ИИ:</b>
 /mode — Выбрать режим общения
 /think &lt;вопрос&gt; — Режим глубокого мышления
+/setmodel — Выбрать модель ИИ
 
 <b>🖼 Изображения:</b>
 /image &lt;описание&gt; — Сгенерировать картинку
@@ -208,3 +209,55 @@ async def cmd_translate(message: types.Message, llm_service: LLMService):
     
     translation = await llm_service.translate(text)
     await message.answer(f"🌍 <b>Перевод:</b>\n{html.escape(translation)}", parse_mode="HTML")
+
+
+# ============ /setmodel ============
+@router.message(Command("setmodel"))
+async def cmd_setmodel(message: types.Message):
+    # Список моделей для выбора
+    models = {
+        "DeepSeek Chat (V3)": "deepseek/deepseek-chat",
+        "DeepSeek R1 (Thinker)": "deepseek/deepseek-r1",
+        "Gemini 2.0 Flash Lite": "google/gemini-2.0-flash-lite-preview-02-05",
+        "GPT-4o Mini": "openai/gpt-4o-mini",
+        "Claude 3.5 Haiku": "anthropic/claude-3-5-haiku"
+    }
+    
+    keyboard_buttons = []
+    for name, model_id in models.items():
+        # Используем короткий callback data, так как есть лимит 64 байта
+        # Поэтому будем сохранять маппинг или использовать хэш, но пока просто передадим ID, 
+        # надеясь что влезает.
+        # OpenRouter ID длинные, поэтому лучше использовать short aliases
+        pass
+
+    # Упростим: используем алиасы в callback_data
+    buttons = [
+        [InlineKeyboardButton(text="🧠 DeepSeek V3", callback_data="model_deepseek/deepseek-chat")],
+        [InlineKeyboardButton(text="🤔 DeepSeek R1", callback_data="model_deepseek/deepseek-r1")],
+        [InlineKeyboardButton(text="⚡ Gemini 2.0 Flash", callback_data="model_google/gemini-2.0-flash-lite-preview-02-05")],
+        [InlineKeyboardButton(text="🤖 GPT-4o Mini", callback_data="model_openai/gpt-4o-mini")],
+        [InlineKeyboardButton(text="📝 Claude 3.5 Haiku", callback_data="model_anthropic/claude-3-5-haiku")],
+        [InlineKeyboardButton(text="❌ Сбросить (по умолчанию)", callback_data="model_reset")]
+    ]
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    await message.answer("🛠 <b>Выберите языковую модель:</b>", reply_markup=keyboard, parse_mode="HTML")
+
+@router.callback_query(lambda c: c.data and c.data.startswith("model_"))
+async def callback_setmodel(callback: types.CallbackQuery, memory_service: MemoryService):
+    if not callback.from_user or not callback.data:
+        return
+    
+    model = callback.data.replace("model_", "")
+    user_id = callback.from_user.id
+    key = f"user_model:{user_id}"
+
+    if model == "reset":
+        await memory_service._redis.delete(key)
+        await callback.message.edit_text("🔄 Модель сброшена на стандартную (из конфига).")
+    else:
+        await memory_service._redis.set(key, model)
+        await callback.message.edit_text(f"✅ Установлена модель:\n<code>{model}</code>", parse_mode="HTML")
+    
+    await callback.answer()

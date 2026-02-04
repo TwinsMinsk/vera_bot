@@ -40,7 +40,12 @@ async def handle_text(message: types.Message, memory_service: MemoryService, llm
             # ----------------------------------
     # --------------------
 
-    response_text = await llm_service.generate_response(history)
+    # --------------------
+    
+    # Check for custom model override
+    model_override = await memory_service._redis.get(f"user_model:{user_id}")
+
+    response_text = await llm_service.generate_response(history, model_override=model_override)
 
     # 4. Add assistant message to history (store RAW markdown logic if needed, but usually store raw)
     await memory_service.add_message(user_id, {"role": "assistant", "content": response_text})
