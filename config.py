@@ -19,7 +19,7 @@ class LLMConfig:
     api_key: str
     base_url: str = "https://openrouter.ai/api/v1"
     model: str = "deepseek/deepseek-chat"
-    vision_model: str = "google/gemini-2.0-flash-lite-preview-02-05"
+    vision_model: str = "openai/gpt-4o-mini"
     thinker_model: str = "deepseek/deepseek-r1"
     system_prompt_path: str = "persona_prompt.md"
 
