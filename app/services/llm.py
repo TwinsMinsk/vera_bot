@@ -18,7 +18,6 @@ class LLMService:
         self._model = config.model
         self._vision_model = config.vision_model
         self._thinker_model = config.thinker_model
-        self._image_model = config.image_model
         self._system_prompt_path = config.system_prompt_path
         self._system_prompt = self._load_system_prompt()
         self._headers = {
@@ -119,76 +118,6 @@ class LLMService:
         except Exception as e:
             logger.error(f"Error analyzing image: {e}")
             return "Произошла ошибка при анализе изображения..."
-
-    async def generate_image(self, prompt: str) -> Optional[bytes]:
-        """Generate image using image model (e.g. Flux)."""
-        messages = [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-
-        try:
-            # Note: For many image models, we don't need modalities if using chat endpoint proxy
-            # but some providers might need it. Let's try without first as it's more standard for dedicated models.
-            response = await self._client.chat.completions.create(
-                model=self._image_model,
-                messages=messages,
-                extra_headers=self._headers
-            )
-            
-            # 1. Check message object directly for image data
-            msg = response.choices[0].message
-            
-            # Case from some OpenRouter providers: msg.image_url or msg.image
-            if hasattr(msg, 'image'):
-                return base64.b64decode(msg.image)
-            
-            # 2. Check content for base64 or URL
-            content = msg.content
-            if not content:
-                # Some providers return it in choice['image_url'] or similar
-                # But OpenAI SDK might not parse it into choice.message.content
-                raw_choice = response.choices[0].model_dump()
-                if 'image_url' in raw_choice:
-                    url = raw_choice['image_url']
-                    return await self._download_image(url)
-                logger.error(f"Empty content from image model. Raw response: {response}")
-                return None
-
-            # Content is base64?
-            if "data:image" in content and "base64," in content:
-                base64_data = content.split("base64,")[1].split('"')[0].split("'")[0]
-                return base64.b64decode(base64_data)
-            
-            # Content is a direct URL?
-            if content.startswith("http"):
-                # Clean URL (sometimes it's in markdown or has quotes)
-                url = content.strip().strip('"').strip("'")
-                if "(" in url and ")" in url: # Markdown [link](url)
-                    url = url.split("(")[1].split(")")[0]
-                return await self._download_image(url)
-            
-            logger.warning(f"Could not find image in response content: {content[:100]}")
-            return None
-            
-        except Exception as e:
-            logger.error(f"Error generating image: {e}", exc_info=True)
-            return None
-
-    async def _download_image(self, url: str) -> Optional[bytes]:
-        """Download image from URL."""
-        import httpx
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, timeout=30.0)
-                if response.status_code == 200:
-                    return response.content
-                logger.error(f"Failed to download image from {url}: {response.status_code}")
-        except Exception as e:
-            logger.error(f"Error downloading image from {url}: {e}")
-        return None
 
     async def translate(self, text: str) -> str:
         """Translate text to Russian (or to English if Russian)."""

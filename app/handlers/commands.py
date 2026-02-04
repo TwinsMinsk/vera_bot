@@ -138,29 +138,6 @@ def format_r1_response(text: str) -> str:
     return html.escape(text)
 
 
-# ============ /image ============
-@router.message(Command("image"))
-async def cmd_image(message: types.Message, llm_service: LLMService):
-    if not message.from_user or not message.text:
-        return
-    
-    prompt = message.text.replace("/image", "").strip()
-    if not prompt:
-        await message.answer("Напиши описание после /image\nПример: /image кот в космосе")
-        return
-    
-    await message.bot.send_chat_action(chat_id=message.chat.id, action="upload_photo")
-    
-    image_data = await llm_service.generate_image(prompt)
-    
-    if image_data:
-        # Отправляем как фото
-        photo = BufferedInputFile(image_data, filename="generated.png")
-        await message.answer_photo(photo, caption=f"🎨 {prompt}")
-    else:
-        await message.answer("Не удалось сгенерировать изображение 😔")
-
-
 # ============ /note ============
 @router.message(Command("note"))
 async def cmd_note(message: types.Message, notes_service: NotesService):
